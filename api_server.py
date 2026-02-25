@@ -33,12 +33,13 @@ import os
 import time
 from contextlib import asynccontextmanager
 from datetime import datetime
+from pathlib import Path
 from typing import Any, Dict, Optional
 
 import uvicorn
 from fastapi import Depends, FastAPI, HTTPException, Request, Security
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.security import APIKeyHeader
 from pydantic import BaseModel, Field
 
@@ -248,6 +249,7 @@ async def root():
         "service": "LLM Safety Middleware",
         "version": "2.0.0",
         "docs": "/docs",
+        "dashboard": "/dashboard",
         "endpoints": {
             "check":      "POST /api/v1/check",
             "generate":   "POST /api/v1/generate",
@@ -256,6 +258,13 @@ async def root():
             "backend":    "GET  /health/backend",
         },
     }
+
+
+@app.get("/dashboard", include_in_schema=False)
+async def dashboard():
+    """Serve the monitoring dashboard UI."""
+    path = Path(__file__).parent / "dashboard.html"
+    return FileResponse(path, media_type="text/html")
 
 
 @app.get("/health", response_model=HealthResponse, tags=["Health"])

@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LLM Safety Dashboard</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #0d1117;
+      --surface: #161b22;
+      --border:  #30363d;
+      --text:    #e6edf3;
+      --muted:   #8b949e;
+      --green:   #3fb950;
+      --red:     #f85149;
+      --blue:    #58a6ff;
+      --yellow:  #d29922;
+      --purple:  #bc8cff;
+      --orange:  #ffa657;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    /* ── Header ─────────────────────────────────────────────── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .logo {
+      font-size: 16px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      background: transparent;
+      transition: all 0.3s ease;
+    }
+    .chip.green { color: var(--green); border-color: rgba(63,185,80,.35); background: rgba(63,185,80,.08); }
+    .chip.red   { color: var(--red);   border-color: rgba(248,81,73,.35);  background: rgba(248,81,73,.08); }
+
+    .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: currentColor;
+      flex-shrink: 0;
+    }
+    .dot.pulse { animation: pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.3; } }
+
+    .spacer { flex: 1; }
+
+    .refresh-info {
+      font-size: 12px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      white-space: nowrap;
+    }
+    #countdown {
+      font-variant-numeric: tabular-nums;
+      font-weight: 700;
+      color: var(--blue);
+      display: inline-block;
+      min-width: 1ch;
+    }
+
+    /* ── Layout ──────────────────────────────────────────────── */
+    main {
+      padding: 24px;
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* ── Cards ───────────────────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+    }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .8px;
+      color: var(--muted);
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* ── Stat cards ──────────────────────────────────────────── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .stat-card .lbl {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .7px;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+    .stat-card .val {
+      font-size: 34px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+      transition: color .3s;
+    }
+    .stat-card .sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    .stat-card.total    .val { color: var(--blue);   }
+    .stat-card.accepted .val { color: var(--green);  }
+    .stat-card.rejected .val { color: var(--red);    }
+    .stat-card.latency  .val { color: var(--purple); }
+
+    /* ── Accept rate bar ─────────────────────────────────────── */
+    .rate-wrap { display: flex; align-items: center; gap: 12px; }
+    .rate-bg {
+      flex: 1; height: 10px;
+      background: rgba(248,81,73,.2);
+      border-radius: 5px;
+      overflow: hidden;
+    }
+    .rate-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--green), #63d68b);
+      border-radius: 5px;
+      width: 0%;
+      transition: width .7s ease;
+    }
+    .rate-label {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--green);
+      min-width: 50px;
+      text-align: right;
+    }
+
+    /* ── Charts row ──────────────────────────────────────────── */
+    .charts-row {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 12px;
+    }
+
+    /* ── Donut ───────────────────────────────────────────────── */
+    .donut-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+    .donut-container { position: relative; width: 150px; height: 150px; }
+    .donut-center {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%,-50%);
+      text-align: center;
+    }
+    .donut-pct { font-size: 22px; font-weight: 700; color: var(--green); }
+    .donut-sub { font-size: 11px; color: var(--muted); }
+    .legend {
+      display: flex;
+      gap: 14px;
+      font-size: 12px;
+    }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+    /* ── Rejection reasons ───────────────────────────────────── */
+    .reasons { display: flex; flex-direction: column; gap: 11px; }
+    .reason-row { display: flex; flex-direction: column; gap: 4px; }
+    .reason-hdr {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+    }
+    .reason-name { color: var(--text); }
+    .reason-cnt  { color: var(--muted); font-variant-numeric: tabular-nums; }
+    .reason-bg {
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .reason-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width .6s ease;
+    }
+    .no-data { color: var(--muted); font-size: 13px; text-align: center; padding: 16px 0; }
+
+    /* ── System info ─────────────────────────────────────────── */
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px 24px;
+    }
+    .info-item {}
+    .info-key {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-bottom: 2px;
+    }
+    .info-val {
+      font-size: 13px;
+      font-weight: 500;
+      word-break: break-all;
+    }
+
+    /* ── Error banner ────────────────────────────────────────── */
+    #error-banner {
+      display: none;
+      background: rgba(248,81,73,.1);
+      border: 1px solid rgba(248,81,73,.3);
+      border-radius: 6px;
+      padding: 10px 14px;
+      font-size: 13px;
+      color: var(--red);
+    }
+
+    /* ── Responsive ──────────────────────────────────────────── */
+    @media (max-width: 800px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .charts-row { grid-template-columns: 1fr; }
+      .donut-wrap { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+      .info-grid  { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 480px) {
+      main { padding: 12px; gap: 12px; }
+      .stat-card .val { font-size: 26px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🛡️ LLM Safety</div>
+  <div id="chip-server" class="chip">
+    <div class="dot"></div>
+    <span>Connecting…</span>
+  </div>
+  <div id="chip-backend" class="chip">
+    <div class="dot"></div>
+    <span>Backend…</span>
+  </div>
+  <div class="spacer"></div>
+  <div class="refresh-info">
+    <span id="last-updated"></span>
+    <span>Refresh in <span id="countdown">10</span>s</span>
+  </div>
+</header>
+
+<main>
+  <div id="error-banner"></div>
+
+  <!-- ── Stat cards ── -->
+  <div class="stats-grid">
+    <div class="card stat-card total">
+      <div class="lbl">Total Requests</div>
+      <div class="val" id="s-total">—</div>
+      <div class="sub" id="s-uptime">uptime —</div>
+    </div>
+    <div class="card stat-card accepted">
+      <div class="lbl">Accepted</div>
+      <div class="val" id="s-accepted">—</div>
+      <div class="sub" id="s-accepted-pct">— of total</div>
+    </div>
+    <div class="card stat-card rejected">
+      <div class="lbl">Rejected</div>
+      <div class="val" id="s-rejected">—</div>
+      <div class="sub" id="s-rejected-pct">— of total</div>
+    </div>
+    <div class="card stat-card latency">
+      <div class="lbl">Avg Latency</div>
+      <div class="val" id="s-latency">—</div>
+      <div class="sub">per request</div>
+    </div>
+  </div>
+
+  <!-- ── Accept rate ── -->
+  <div class="card">
+    <div class="section-title">Accept Rate</div>
+    <div class="rate-wrap">
+      <div class="rate-bg"><div class="rate-fill" id="rate-fill"></div></div>
+      <div class="rate-label" id="rate-label">—%</div>
+    </div>
+  </div>
+
+  <!-- ── Distribution + rejection reasons ── -->
+  <div class="charts-row">
+    <div class="card">
+      <div class="section-title">Distribution</div>
+      <div class="donut-wrap">
+        <div class="donut-container">
+          <svg width="150" height="150" viewBox="0 0 150 150">
+            <!-- Track -->
+            <circle cx="75" cy="75" r="55"
+              fill="none" stroke="var(--border)" stroke-width="18"/>
+            <!-- Rejected arc -->
+            <circle id="arc-rejected" cx="75" cy="75" r="55"
+              fill="none" stroke="var(--red)" stroke-width="18"
+              stroke-dasharray="0 346"
+              stroke-linecap="butt"
+              style="transform:rotate(-90deg);transform-origin:center;transition:stroke-dasharray .7s ease;"/>
+            <!-- Accepted arc -->
+            <circle id="arc-accepted" cx="75" cy="75" r="55"
+              fill="none" stroke="var(--green)" stroke-width="18"
+              stroke-dasharray="0 346"
+              stroke-linecap="butt"
+              style="transform:rotate(-90deg);transform-origin:center;transition:stroke-dasharray .7s ease,stroke-dashoffset .7s ease;"/>
+          </svg>
+          <div class="donut-center">
+            <div class="donut-pct" id="donut-pct">—</div>
+            <div class="donut-sub">accepted</div>
+          </div>
+        </div>
+        <div class="legend">
+          <div class="legend-item">
+            <div class="legend-dot" style="background:var(--green)"></div>
+            <span>Accepted</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:var(--red)"></div>
+            <span>Rejected</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Rejection Reasons</div>
+      <div class="reasons" id="reasons"></div>
+    </div>
+  </div>
+
+  <!-- ── System info ── -->
+  <div class="card">
+    <div class="section-title">System</div>
+    <div class="info-grid">
+      <div class="info-item">
+        <div class="info-key">Server Status</div>
+        <div class="info-val" id="i-status">—</div>
+      </div>
+      <div class="info-item">
+        <div class="info-key">Version</div>
+        <div class="info-val" id="i-version">—</div>
+      </div>
+      <div class="info-item">
+        <div class="info-key">Uptime</div>
+        <div class="info-val" id="i-uptime">—</div>
+      </div>
+      <div class="info-item">
+        <div class="info-key">Backend Type</div>
+        <div class="info-val" id="i-backend">—</div>
+      </div>
+      <div class="info-item">
+        <div class="info-key">Model</div>
+        <div class="info-val" id="i-model">—</div>
+      </div>
+      <div class="info-item">
+        <div class="info-key">Backend URL</div>
+        <div class="info-val" id="i-url" style="font-size:12px">—</div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+  const INTERVAL = 10;
+  const CIRC = 2 * Math.PI * 55; // r=55 → ~345.6
+
+  const REASON_COLORS = {
+    token_filter:        '#58a6ff',
+    pattern_match:       '#d29922',
+    semantic_unsafe:     '#f85149',
+    post_gen_unsafe:     '#ff7b72',
+    rate_limit_exceeded: '#bc8cff',
+    backend_unavailable: '#8b949e',
+    input_too_long:      '#ffa657',
+  };
+
+  // ── Countdown ───────────────────────────────────────────────
+  let countdown = INTERVAL;
+  const cdEl = document.getElementById('countdown');
+  setInterval(() => {
+    countdown = Math.max(0, countdown - 1);
+    cdEl.textContent = countdown;
+  }, 1000);
+
+  // ── Helpers ─────────────────────────────────────────────────
+  const $ = id => document.getElementById(id);
+  const set = (id, v) => { const el = $(id); if (el) el.textContent = v; };
+  const fmt = n => typeof n === 'number' ? n.toLocaleString() : n;
+
+  function pct(a, b) {
+    return b > 0 ? ((a / b) * 100).toFixed(1) : '0.0';
+  }
+
+  function fmtUptime(s) {
+    s = Math.floor(s);
+    const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+    if (h > 0) return `${h}h ${m}m ${sec}s`;
+    if (m > 0) return `${m}m ${sec}s`;
+    return `${sec}s`;
+  }
+
+  // ── Status chips ─────────────────────────────────────────────
+  function setChip(id, ok, label) {
+    const chip = $(id);
+    const dot  = chip.querySelector('.dot');
+    chip.className = `chip ${ok ? 'green' : 'red'}`;
+    dot.className  = `dot ${ok ? 'pulse' : ''}`;
+    chip.querySelector('span').textContent = label;
+  }
+
+  // ── Donut ────────────────────────────────────────────────────
+  function updateDonut(accepted, total) {
+    const arcAcc = $(  'arc-accepted');
+    const arcRej = $('arc-rejected');
+    if (!total) {
+      arcAcc.setAttribute('stroke-dasharray', `0 ${CIRC}`);
+      arcRej.setAttribute('stroke-dasharray', `0 ${CIRC}`);
+      set('donut-pct', '—');
+      return;
+    }
+    const accArc = (accepted / total) * CIRC;
+    const rejArc = CIRC - accArc;
+    const gap = 2;
+
+    arcAcc.setAttribute('stroke-dasharray',  `${Math.max(0, accArc - gap)} ${CIRC}`);
+    arcAcc.setAttribute('stroke-dashoffset', '0');
+
+    arcRej.setAttribute('stroke-dasharray',  `${Math.max(0, rejArc - gap)} ${CIRC}`);
+    arcRej.setAttribute('stroke-dashoffset', `${-accArc}`);
+
+    set('donut-pct', pct(accepted, total) + '%');
+  }
+
+  // ── Rejection reasons ─────────────────────────────────────────
+  function renderReasons(reasons) {
+    const el = $('reasons');
+    const entries = Object.entries(reasons || {}).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
+    if (!entries.length) {
+      el.innerHTML = '<div class="no-data">No rejections recorded</div>';
+      return;
+    }
+    const max = entries[0][1];
+    el.innerHTML = entries.map(([key, count]) => {
+      const barW = max > 0 ? (count / max * 100).toFixed(1) : 0;
+      const color = REASON_COLORS[key] || 'var(--muted)';
+      const label = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+      return `<div class="reason-row">
+        <div class="reason-hdr">
+          <span class="reason-name">${label}</span>
+          <span class="reason-cnt">${fmt(count)}</span>
+        </div>
+        <div class="reason-bg">
+          <div class="reason-fill" style="width:${barW}%;background:${color}"></div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // ── Fetch & render ────────────────────────────────────────────
+  async function refresh() {
+    const errEl = $('error-banner');
+    try {
+      const [stats, health, backend] = await Promise.all([
+        fetch('/api/v1/statistics').then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); }),
+        fetch('/health').then(r => r.json()).catch(() => null),
+        fetch('/health/backend').then(r => r.json()).catch(() => null),
+      ]);
+
+      errEl.style.display = 'none';
+
+      // ── Stat cards ──
+      const { total_requests: total, accepted, rejected, avg_processing_time: avgT, uptime_seconds } = stats;
+      const avgMs = (avgT * 1000).toFixed(0);
+
+      set('s-total',        fmt(total));
+      set('s-accepted',     fmt(accepted));
+      set('s-rejected',     fmt(rejected));
+      set('s-latency',      total > 0 ? `${avgMs}ms` : '—');
+      set('s-accepted-pct', total > 0 ? `${pct(accepted, total)}% of total` : '—');
+      set('s-rejected-pct', total > 0 ? `${pct(rejected, total)}% of total` : '—');
+      set('s-uptime',       `uptime ${fmtUptime(uptime_seconds)}`);
+
+      // ── Rate bar ──
+      const ratePct = total > 0 ? parseFloat(pct(accepted, total)) : 0;
+      $('rate-fill').style.width = `${ratePct}%`;
+      set('rate-label', total > 0 ? `${pct(accepted, total)}%` : '—%');
+
+      // ── Donut ──
+      updateDonut(accepted, total);
+
+      // ── Reasons ──
+      renderReasons(stats.rejection_reasons);
+
+      // ── Health ──
+      if (health) {
+        const ok = health.status === 'healthy';
+        setChip('chip-server', ok, ok ? 'Healthy' : health.status);
+        set('i-status',  health.status);
+        set('i-version', health.version || '—');
+        set('i-uptime',  fmtUptime(health.uptime_seconds));
+      }
+
+      // ── Backend ──
+      if (backend) {
+        setChip('chip-backend', backend.reachable, backend.reachable ? 'Backend OK' : 'Backend Down');
+        set('i-backend', backend.backend_type || '—');
+        set('i-model',   backend.model || '—');
+        set('i-url',     backend.base_url || '—');
+      }
+
+      // ── Timestamp ──
+      set('last-updated', `Updated ${new Date().toLocaleTimeString()}`);
+
+    } catch (err) {
+      errEl.style.display = 'block';
+      errEl.textContent   = `⚠ Could not reach server: ${err.message}`;
+      setChip('chip-server',  false, 'Unreachable');
+      setChip('chip-backend', false, 'Unknown');
+    }
+
+    countdown = INTERVAL;
+  }
+
+  refresh();
+  setInterval(refresh, INTERVAL * 1000);
+</script>
+</body>
+</html>
