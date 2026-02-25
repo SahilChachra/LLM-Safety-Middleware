@@ -541,8 +541,8 @@ class TestExternalLLMClient:
     @respx.mock
     async def test_health_check_reachable(self):
         import logging
-        respx.get("http://fake-llm:11434/api/tags").mock(
-            return_value=httpx.Response(200, json={"models": []})
+        respx.get("http://fake-llm:11434").mock(
+            return_value=httpx.Response(200, text="Ollama is running")
         )
         cfg = LLMBackendConfig(backend_type="ollama", base_url="http://fake-llm:11434", model="llama2")
         client = ExternalLLMClient(cfg, logging.getLogger("test"))
@@ -555,7 +555,7 @@ class TestExternalLLMClient:
     @respx.mock
     async def test_health_check_unreachable(self):
         import logging
-        respx.get("http://offline:11434/api/tags").mock(
+        respx.get("http://offline:11434").mock(
             side_effect=httpx.ConnectError("refused")
         )
         cfg = LLMBackendConfig(backend_type="ollama", base_url="http://offline:11434", model="x")
