@@ -9,6 +9,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Built-in monitoring dashboard served at `GET /dashboard` — auto-refreshes every
+  10 seconds; shows request counts, accept rate, rejection reason breakdown,
+  avg latency, and backend health status. No external dependencies (pure HTML/CSS/JS).
+
+### Fixed
+
+- `SafetyPipeline.__init__` now defaults to `LLMBackendConfig.from_env()` instead
+  of `LLMBackendConfig()` (hardcoded values), so `LLM_BACKEND_TYPE`, `LLM_BASE_URL`,
+  `LLM_MODEL`, and related env vars are respected by every pipeline instance — not just
+  `api_server.py`.
+- `demo_safety_pipeline.py` updated to use `LLMBackendConfig.from_env()` in all
+  examples so env vars set at the shell are picked up correctly.
+- Ollama health probe now uses the server root URL (`GET /`) instead of `GET /api/tags`.
+  The root endpoint is the canonical Ollama liveness check and is less likely to be
+  restricted or slow on remote servers.
+- Health probe failure log level lowered from `WARNING` to `DEBUG` to avoid log spam
+  when the probe fails but actual generation requests succeed.
+- `config_production.json` — `reports_dir` changed from `/app/safety_reports`
+  (Docker-only absolute path) to `./safety_reports` (relative path that resolves
+  correctly both locally and inside the container).
+- GitHub Actions `docker.yml` — added `load: true` to `docker/build-push-action` so
+  the built image is loaded into the local Docker daemon and available to the
+  subsequent `docker run` smoke-test step.
+- Test mocks for `test_health_check_reachable` and `test_health_check_unreachable`
+  updated to match the new Ollama probe URL (`/` instead of `/api/tags`).
+
 ---
 
 ## [2.0.0] — 2026-02-24
@@ -72,7 +100,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.0.0] — 2024-01-01
+## [1.0.0] — 2025-02-01
 
 ### Added
 

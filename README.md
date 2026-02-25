@@ -89,13 +89,8 @@ print(f"Safety Level: {report.safety_level.name}")
 import asyncio
 from llm_safety_pipeline import LLMBackendConfig, SafetyPipeline
 
-pipeline = SafetyPipeline(
-    backend_config=LLMBackendConfig(
-        backend_type="ollama",
-        base_url="http://localhost:11434",
-        model="llama2",
-    )
-)
+# Reads LLM_BACKEND_TYPE, LLM_BASE_URL, LLM_MODEL, etc. from env vars
+pipeline = SafetyPipeline(backend_config=LLMBackendConfig.from_env())
 
 async def main():
     status, report = await pipeline.async_process(
