@@ -622,8 +622,9 @@ class ExternalLLMClient:
         """Probe the backend; returns a status dict."""
         t = self.config.backend_type.lower()
         base = self.config.base_url.rstrip("/")
+        # Ollama root path returns "Ollama is running" — more reliable than /api/tags
         if t == "ollama":
-            probe = f"{base}/api/tags"
+            probe = base
         elif t == "openai":
             probe = f"{base}/v1/models"
         else:
@@ -632,7 +633,7 @@ class ExternalLLMClient:
             resp = await self._client.get(probe, timeout=5.0)
             reachable = resp.status_code < 500
         except Exception as exc:
-            self.logger.warning(f"Backend health probe failed: {exc}")
+            self.logger.debug(f"Backend health probe failed: {exc}")
             reachable = False
         return {
             "reachable": reachable,
