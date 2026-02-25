@@ -785,7 +785,7 @@ class SafetyPipeline:
         backend_config: Optional[LLMBackendConfig] = None,
     ):
         self.config = config or SafetyConfig()
-        self.backend_config = backend_config or LLMBackendConfig()
+        self.backend_config = backend_config or LLMBackendConfig.from_env()
 
         self.logger = _make_logger(
             name=f"llm_safety.pipeline.{id(self)}",

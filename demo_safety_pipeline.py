@@ -19,7 +19,6 @@ Set the LLM backend via environment variables before running generation examples
 """
 
 import asyncio
-import os
 import sys
 from pathlib import Path
 
@@ -105,14 +104,8 @@ def example_basic_usage():
 
 async def _async_generate_example():
     """Inner async function for the full pipeline demo."""
-    # Read backend settings from env vars (set LLM_BACKEND_TYPE, LLM_BASE_URL, LLM_MODEL).
-    backend_cfg = LLMBackendConfig(
-        backend_type=os.environ.get("LLM_BACKEND_TYPE", "ollama"),
-        base_url=os.environ.get("LLM_BASE_URL", "http://localhost:11434"),
-        model=os.environ.get("LLM_MODEL", "llama2"),
-        max_new_tokens=int(os.environ.get("LLM_MAX_NEW_TOKENS", "150")),
-        temperature=float(os.environ.get("LLM_TEMPERATURE", "0.7")),
-    )
+    # Read backend settings from env vars (LLM_BACKEND_TYPE, LLM_BASE_URL, LLM_MODEL, etc.)
+    backend_cfg = LLMBackendConfig.from_env()
     pipeline = SafetyPipeline(backend_config=backend_cfg)
 
     safe_prompt = "Write a short paragraph about artificial intelligence in healthcare."
@@ -175,13 +168,7 @@ def example_custom_config():
     )
 
     # --- Remote LLM backend config (reads from env vars) ---
-    backend_config = LLMBackendConfig(
-        backend_type=os.environ.get("LLM_BACKEND_TYPE", "ollama"),
-        base_url=os.environ.get("LLM_BASE_URL", "http://localhost:11434"),
-        model=os.environ.get("LLM_MODEL", "llama2"),
-        max_new_tokens=int(os.environ.get("LLM_MAX_NEW_TOKENS", "200")),
-        temperature=float(os.environ.get("LLM_TEMPERATURE", "0.7")),
-    )
+    backend_config = LLMBackendConfig.from_env()
 
     # Save and reload safety config
     safety_config.save_json("./demo_safety_config.json")
