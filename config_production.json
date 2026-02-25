@@ -14,7 +14,7 @@
   "log_level": "WARNING",
   "log_file": null,
   "save_reports": true,
-  "reports_dir": "/app/safety_reports",
+  "reports_dir": "./safety_reports",
   "custom_banned_patterns": [],
   "custom_allowed_contexts": []
 }
