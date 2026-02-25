@@ -15,10 +15,11 @@ Set the LLM backend via environment variables before running generation examples
 
     export LLM_BACKEND_TYPE=ollama          # or "openai" / "custom"
     export LLM_BASE_URL=http://localhost:11434
-    export LLM_MODEL=llama2
+    export LLM_MODEL=llama3.2               # or whatever model you have pulled
 """
 
 import asyncio
+import os
 import sys
 from pathlib import Path
 
@@ -104,13 +105,13 @@ def example_basic_usage():
 
 async def _async_generate_example():
     """Inner async function for the full pipeline demo."""
-    # Explicitly configure the backend (can also come from env vars).
+    # Read backend settings from env vars (set LLM_BACKEND_TYPE, LLM_BASE_URL, LLM_MODEL).
     backend_cfg = LLMBackendConfig(
-        backend_type="ollama",
-        base_url="http://localhost:11434",
-        model="llama2",
-        max_new_tokens=150,
-        temperature=0.7,
+        backend_type=os.environ.get("LLM_BACKEND_TYPE", "ollama"),
+        base_url=os.environ.get("LLM_BASE_URL", "http://localhost:11434"),
+        model=os.environ.get("LLM_MODEL", "llama2"),
+        max_new_tokens=int(os.environ.get("LLM_MAX_NEW_TOKENS", "150")),
+        temperature=float(os.environ.get("LLM_TEMPERATURE", "0.7")),
     )
     pipeline = SafetyPipeline(backend_config=backend_cfg)
 
@@ -173,13 +174,13 @@ def example_custom_config():
         save_reports=False,
     )
 
-    # --- Remote LLM backend config ---
+    # --- Remote LLM backend config (reads from env vars) ---
     backend_config = LLMBackendConfig(
-        backend_type="ollama",
-        base_url="http://localhost:11434",
-        model="llama2",
-        max_new_tokens=200,
-        temperature=0.7,
+        backend_type=os.environ.get("LLM_BACKEND_TYPE", "ollama"),
+        base_url=os.environ.get("LLM_BASE_URL", "http://localhost:11434"),
+        model=os.environ.get("LLM_MODEL", "llama2"),
+        max_new_tokens=int(os.environ.get("LLM_MAX_NEW_TOKENS", "200")),
+        temperature=float(os.environ.get("LLM_TEMPERATURE", "0.7")),
     )
 
     # Save and reload safety config
