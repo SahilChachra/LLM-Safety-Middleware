@@ -1,0 +1,110 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Project metadata
+# ─────────────────────────────────────────────────────────────────────────────
+[project]
+name = "llm-safety-pipeline"
+version = "2.0.0"
+description = "Production-grade async safety middleware for LLM APIs (Ollama, OpenAI, custom)"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+keywords = [
+    "llm", "safety", "middleware", "content-moderation",
+    "fastapi", "ollama", "openai", "toxic-bert",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Internet :: WWW/HTTP :: HTTP Servers",
+    "Framework :: FastAPI",
+    "Typing :: Typed",
+]
+
+# Runtime dependencies (mirrors requirements.txt)
+dependencies = [
+    "torch>=2.0.0",
+    "transformers>=4.30.0",
+    "spacy>=3.5.0",
+    "httpx>=0.25.0",
+    "numpy>=1.24.0",
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "python-dotenv>=1.0.0",
+    "fastapi>=0.100.0",
+    "uvicorn>=0.23.0",
+    "structlog>=23.1.0",
+    "prometheus-client>=0.17.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "pytest-mock>=3.11.0",
+    "pytest-asyncio>=0.23.0",
+    "respx>=0.20.0",
+    "black>=23.7.0",
+    "isort>=5.12.0",
+    "flake8>=6.1.0",
+    "mypy>=1.5.0",
+    "pre-commit>=3.3.0",
+]
+
+[project.scripts]
+llm-safety-server = "api_server:app"
+
+[project.urls]
+Homepage = "https://github.com/SahilChachra/LLM-Safety-Middleware"
+Documentation = "https://github.com/SahilChachra/LLM-Safety-Middleware#readme"
+"Bug Tracker" = "https://github.com/SahilChachra/LLM-Safety-Middleware/issues"
+Changelog = "https://github.com/SahilChachra/LLM-Safety-Middleware/blob/main/CHANGELOG.md"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Tool configuration
+# ─────────────────────────────────────────────────────────────────────────────
+[tool.setuptools.packages.find]
+include = ["llm_safety_pipeline*", "api_server*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["."]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "--tb=short -q"
+
+[tool.black]
+line-length = 99
+target-version = ["py310", "py311", "py312"]
+skip-string-normalization = false
+
+[tool.isort]
+profile = "black"
+line_length = 99
+
+[tool.mypy]
+python_version = "3.10"
+strict = false
+ignore_missing_imports = true
+warn_unused_ignores = true
+warn_return_any = false
+no_implicit_optional = true
+
+[tool.coverage.run]
+source = ["llm_safety_pipeline", "api_server"]
+omit = ["test_*", "demo_*", "venv/*", ".venv/*"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+fail_under = 70

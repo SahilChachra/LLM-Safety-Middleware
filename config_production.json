@@ -1,0 +1,20 @@
+{
+  "safety_model_name": "unitary/toxic-bert",
+  "spacy_model": "en_core_web_sm",
+  "safety_threshold": 0.80,
+  "toxicity_threshold": 0.75,
+  "enable_pattern_matching": true,
+  "enable_token_filtering": true,
+  "enable_semantic_check": true,
+  "enable_post_generation_check": true,
+  "device": "cpu",
+  "max_prompt_length": 10000,
+  "enable_rate_limiting": true,
+  "max_requests_per_minute": 60,
+  "log_level": "WARNING",
+  "log_file": null,
+  "save_reports": true,
+  "reports_dir": "/app/safety_reports",
+  "custom_banned_patterns": [],
+  "custom_allowed_contexts": []
+}

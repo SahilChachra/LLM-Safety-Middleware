@@ -1,0 +1,89 @@
+# ── Python ────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.pyd
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+*.egg
+MANIFEST
+.eggs/
+wheels/
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env/
+ENV/
+
+# ── Testing & coverage ────────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+*.lcov
+nosetests.xml
+pytest_cache/
+
+# ── Type checkers ─────────────────────────────────────────────────────────
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pytype/
+.pyre/
+
+# ── Linters ───────────────────────────────────────────────────────────────
+.ruff_cache/
+
+# ── Secrets & environment ─────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# ── Runtime outputs ───────────────────────────────────────────────────────
+logs/
+*.log
+safety_reports/
+test_reports/
+
+# ── Demo artifacts ────────────────────────────────────────────────────────
+demo_safety_config.json
+
+# ── HuggingFace / model cache ─────────────────────────────────────────────
+*.bin
+*.safetensors
+models/
+model_cache/
+
+# ── Jupyter ───────────────────────────────────────────────────────────────
+.ipynb_checkpoints/
+*.ipynb
+
+# ── IDEs ──────────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# ── OS ────────────────────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# ── Docker ────────────────────────────────────────────────────────────────
+# Keep Dockerfile and docker-compose.yml tracked; ignore runtime volumes
+docker-volumes/
+
+# ── Claude Code (internal) ────────────────────────────────────────────────
+.claude/

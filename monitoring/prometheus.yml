@@ -1,0 +1,16 @@
+global:
+  scrape_interval:     15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'llm-safety-middleware'
+
+scrape_configs:
+  - job_name: 'safety-middleware'
+    static_configs:
+      - targets: ['safety-api:8000']
+    metrics_path: '/metrics'
+    scheme: http
+
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']

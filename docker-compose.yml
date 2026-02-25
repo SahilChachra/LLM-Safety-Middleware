@@ -1,0 +1,125 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# LLM Safety Middleware — Docker Compose
+# ─────────────────────────────────────────────────────────────────────────────
+# Quick start:
+#   cp .env.example .env   # fill in LLM_BASE_URL, LLM_MODEL, ADMIN_API_KEY
+#   docker-compose up -d
+#
+# The middleware is backend-agnostic. Point LLM_BASE_URL at any OpenAI-compatible
+# server (Ollama, LM Studio, vLLM, Together AI, OpenAI, etc.).
+#
+# Optional services use Docker Compose profiles:
+#   docker-compose --profile monitoring up -d   # adds Prometheus + Grafana
+#   docker-compose --profile caching   up -d   # adds Redis
+# ─────────────────────────────────────────────────────────────────────────────
+
+version: '3.8'
+
+services:
+
+  # ── LLM Safety Middleware ─────────────────────────────────────────────────
+  safety-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: llm-safety-middleware:latest
+    container_name: llm-safety-api
+    restart: unless-stopped
+    ports:
+      - "${PORT:-8000}:8000"
+    env_file:
+      - .env                          # copy from .env.example and fill in values
+    environment:
+      # LLM backend (override individual vars or set all in .env)
+      - LLM_BACKEND_TYPE=${LLM_BACKEND_TYPE:-openai}
+      - LLM_BASE_URL=${LLM_BASE_URL:-https://api.openai.com}
+      - LLM_MODEL=${LLM_MODEL:-gpt-4o-mini}
+      - LLM_API_KEY=${LLM_API_KEY:-}
+      - LLM_TIMEOUT_SECONDS=${LLM_TIMEOUT_SECONDS:-60}
+      - LLM_MAX_RETRIES=${LLM_MAX_RETRIES:-3}
+      - LLM_MAX_NEW_TOKENS=${LLM_MAX_NEW_TOKENS:-512}
+      - LLM_TEMPERATURE=${LLM_TEMPERATURE:-0.7}
+      - LLM_TOP_P=${LLM_TOP_P:-0.95}
+      - LLM_SYSTEM_PROMPT=${LLM_SYSTEM_PROMPT:-}
+      # Server
+      - HOST=0.0.0.0
+      - PORT=8000
+      - WORKERS=${WORKERS:-1}
+      - CONFIG_PATH=config_production.json
+      - ADMIN_API_KEY=${ADMIN_API_KEY:-}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-}
+    volumes:
+      - ./logs:/app/logs
+      - ./safety_reports:/app/safety_reports
+      - ./config_production.json:/app/config_production.json:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - safety-network
+
+  # ── Optional: Prometheus metrics ─────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: llm-safety-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    networks:
+      - safety-network
+    profiles:
+      - monitoring
+
+  # ── Optional: Grafana dashboard ───────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:latest
+    container_name: llm-safety-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+    networks:
+      - safety-network
+    depends_on:
+      - prometheus
+    profiles:
+      - monitoring
+
+  # ── Optional: Redis (future caching layer) ────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: llm-safety-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - safety-network
+    profiles:
+      - caching
+
+networks:
+  safety-network:
+    driver: bridge
+
+volumes:
+  prometheus-data:
+  grafana-data:
+  redis-data:

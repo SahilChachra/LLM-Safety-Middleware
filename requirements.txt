@@ -1,0 +1,43 @@
+# LLM Safety Middleware — Dependencies
+# =====================================
+
+# Core ML / safety models
+torch>=2.0.0
+transformers>=4.30.0
+
+# NLP rule engine
+spacy>=3.5.0
+# After install run: python -m spacy download en_core_web_sm
+
+# Async HTTP client (external LLM backend calls)
+httpx>=0.25.0
+
+# Data processing
+numpy>=1.24.0
+
+# Configuration & utilities
+pydantic>=2.0.0
+python-dotenv>=1.0.0
+
+# Testing
+pytest>=7.4.0
+pytest-cov>=4.1.0
+pytest-mock>=3.11.0
+pytest-asyncio>=0.23.0        # async test support
+respx>=0.20.0                 # httpx request mocking
+
+# Monitoring & logging
+prometheus-client>=0.17.0
+structlog>=23.1.0
+
+# API server
+fastapi>=0.100.0
+uvicorn>=0.23.0
+pydantic-settings>=2.0.0
+
+# Development tools
+black>=23.7.0
+flake8>=6.1.0
+mypy>=1.5.0
+isort>=5.12.0
+pre-commit>=3.3.0

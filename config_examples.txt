@@ -1,0 +1,210 @@
+# Example Configuration Files
+# ============================
+#
+# There are two separate config objects:
+#   1. SafetyConfig  — controls the safety-check layers
+#   2. LLMBackendConfig — controls the remote LLM backend
+#
+# SafetyConfig can be loaded from a JSON file (CONFIG_PATH env var or
+# SafetyConfig.from_json("...")).  LLMBackendConfig is configured via
+# environment variables (see api_server.py module docstring).
+
+# ──────────────────────────────────────────────────────────────────────────
+# config_development.json
+# Development environment — lenient thresholds, verbose logging
+# ──────────────────────────────────────────────────────────────────────────
+{
+  "safety_model_name": "unitary/toxic-bert",
+  "spacy_model": "en_core_web_sm",
+  "safety_threshold": 0.70,
+  "toxicity_threshold": 0.65,
+  "enable_pattern_matching": true,
+  "enable_token_filtering": true,
+  "enable_semantic_check": true,
+  "enable_post_generation_check": true,
+  "device": "cpu",
+  "max_prompt_length": 10000,
+  "enable_rate_limiting": false,
+  "max_requests_per_minute": 1000,
+  "log_level": "DEBUG",
+  "log_file": "logs/safety_dev.log",
+  "save_reports": true,
+  "reports_dir": "./safety_reports_dev",
+  "custom_banned_patterns": [],
+  "custom_allowed_contexts": []
+}
+
+# Corresponding LLM backend env vars for development:
+#   LLM_BACKEND_TYPE=ollama
+#   LLM_BASE_URL=http://localhost:11434
+#   LLM_MODEL=llama2
+#   LLM_TIMEOUT_SECONDS=60
+#   LLM_MAX_NEW_TOKENS=512
+#   LLM_TEMPERATURE=0.7
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# config_staging.json
+# Staging environment — production-like settings with more logging
+# ──────────────────────────────────────────────────────────────────────────
+{
+  "safety_model_name": "unitary/toxic-bert",
+  "spacy_model": "en_core_web_sm",
+  "safety_threshold": 0.75,
+  "toxicity_threshold": 0.70,
+  "enable_pattern_matching": true,
+  "enable_token_filtering": true,
+  "enable_semantic_check": true,
+  "enable_post_generation_check": true,
+  "device": "cuda",
+  "max_prompt_length": 10000,
+  "enable_rate_limiting": true,
+  "max_requests_per_minute": 100,
+  "log_level": "INFO",
+  "log_file": "logs/safety_staging.log",
+  "save_reports": true,
+  "reports_dir": "./safety_reports_staging",
+  "custom_banned_patterns": [],
+  "custom_allowed_contexts": []
+}
+
+# Corresponding LLM backend env vars for staging:
+#   LLM_BACKEND_TYPE=ollama
+#   LLM_BASE_URL=http://staging-llm-host:11434
+#   LLM_MODEL=llama2
+#   LLM_TIMEOUT_SECONDS=60
+#   LLM_MAX_RETRIES=3
+#   LLM_MAX_NEW_TOKENS=512
+#   LLM_TEMPERATURE=0.7
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# config_production.json
+# Production environment — strict thresholds, optimised performance
+# ──────────────────────────────────────────────────────────────────────────
+{
+  "safety_model_name": "unitary/toxic-bert",
+  "spacy_model": "en_core_web_sm",
+  "safety_threshold": 0.80,
+  "toxicity_threshold": 0.75,
+  "enable_pattern_matching": true,
+  "enable_token_filtering": true,
+  "enable_semantic_check": true,
+  "enable_post_generation_check": true,
+  "device": "cuda",
+  "max_prompt_length": 10000,
+  "enable_rate_limiting": true,
+  "max_requests_per_minute": 60,
+  "log_level": "WARNING",
+  "log_file": "logs/safety_production.log",
+  "save_reports": true,
+  "reports_dir": "/var/log/safety_reports",
+  "custom_banned_patterns": [],
+  "custom_allowed_contexts": []
+}
+
+# Corresponding LLM backend env vars for production:
+#   LLM_BACKEND_TYPE=openai        # or "ollama" if self-hosted
+#   LLM_BASE_URL=https://api.openai.com
+#   LLM_MODEL=gpt-4o
+#   LLM_API_KEY=sk-...
+#   LLM_TIMEOUT_SECONDS=60
+#   LLM_MAX_RETRIES=3
+#   LLM_MAX_NEW_TOKENS=512
+#   LLM_TEMPERATURE=0.7
+#   LLM_TOP_P=0.95
+#   ADMIN_API_KEY=<strong-random-secret>
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# config_high_security.json
+# Maximum safety — tightest thresholds, lower rate limit
+# ──────────────────────────────────────────────────────────────────────────
+{
+  "safety_model_name": "unitary/toxic-bert",
+  "spacy_model": "en_core_web_sm",
+  "safety_threshold": 0.90,
+  "toxicity_threshold": 0.85,
+  "enable_pattern_matching": true,
+  "enable_token_filtering": true,
+  "enable_semantic_check": true,
+  "enable_post_generation_check": true,
+  "device": "cuda",
+  "max_prompt_length": 4000,
+  "enable_rate_limiting": true,
+  "max_requests_per_minute": 30,
+  "log_level": "INFO",
+  "log_file": "logs/safety_high_sec.log",
+  "save_reports": true,
+  "reports_dir": "/var/log/safety_reports_secure",
+  "custom_banned_patterns": [
+    "\\bcustom_pattern_1\\b",
+    "\\bcustom_pattern_2\\b"
+  ],
+  "custom_allowed_contexts": [
+    "\\bapproved_context\\b"
+  ]
+}
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# config_performance.json
+# Speed-optimised — semantic and post-gen checks disabled
+# ──────────────────────────────────────────────────────────────────────────
+{
+  "safety_model_name": "unitary/toxic-bert",
+  "spacy_model": "en_core_web_sm",
+  "safety_threshold": 0.75,
+  "toxicity_threshold": 0.70,
+  "enable_pattern_matching": true,
+  "enable_token_filtering": true,
+  "enable_semantic_check": false,
+  "enable_post_generation_check": false,
+  "device": "cuda",
+  "max_prompt_length": 10000,
+  "enable_rate_limiting": true,
+  "max_requests_per_minute": 200,
+  "log_level": "WARNING",
+  "log_file": null,
+  "save_reports": false,
+  "reports_dir": "./safety_reports",
+  "custom_banned_patterns": [],
+  "custom_allowed_contexts": []
+}
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# config_testing.json
+# Test environment — permissive thresholds, no file output
+# ──────────────────────────────────────────────────────────────────────────
+{
+  "safety_model_name": "unitary/toxic-bert",
+  "spacy_model": "en_core_web_sm",
+  "safety_threshold": 0.60,
+  "toxicity_threshold": 0.60,
+  "enable_pattern_matching": true,
+  "enable_token_filtering": true,
+  "enable_semantic_check": true,
+  "enable_post_generation_check": true,
+  "device": "cpu",
+  "max_prompt_length": 10000,
+  "enable_rate_limiting": false,
+  "max_requests_per_minute": 10000,
+  "log_level": "ERROR",
+  "log_file": null,
+  "save_reports": false,
+  "reports_dir": "./test_reports",
+  "custom_banned_patterns": [],
+  "custom_allowed_contexts": []
+}
+
+# Notes on removed fields (v1 → v2 migration):
+# The following SafetyConfig fields were removed in v2 when the pipeline was
+# converted to a middleware proxy.  They are now configured through
+# LLMBackendConfig / environment variables:
+#   llm_model_name  → LLM_MODEL env var
+#   max_new_tokens  → LLM_MAX_NEW_TOKENS env var
+#   temperature     → LLM_TEMPERATURE env var
+#   top_p           → LLM_TOP_P env var
+#   batch_size      → removed (no local generation)
+#   max_cache_size  → removed
