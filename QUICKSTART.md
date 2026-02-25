@@ -244,6 +244,15 @@ curl -X POST http://localhost:8000/api/v1/statistics/reset \
   -H "X-API-Key: <ADMIN_API_KEY>"
 ```
 
+#### 6. Monitoring dashboard (browser)
+
+Open **http://localhost:8000/dashboard** in your browser for a live visual
+overview of all the above — no extra tools needed. The dashboard polls the API
+every 10 seconds and shows request counts, accept rate, rejection reasons,
+latency, and backend health.
+
+![Dashboard preview](docs/dashboard-preview.png)
+
 ---
 
 ## 📊 Common Use Cases

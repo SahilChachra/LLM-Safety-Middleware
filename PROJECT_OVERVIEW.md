@@ -217,6 +217,7 @@ FastAPI application that wraps the pipeline.
 | `/api/v1/config` | GET | — | Sanitised safety config |
 | `/health` | GET | — | Server health + uptime |
 | `/health/backend` | GET | — | Remote LLM reachability probe |
+| `/dashboard` | GET | — | Built-in monitoring dashboard UI |
 
 **Environment variables:**
 

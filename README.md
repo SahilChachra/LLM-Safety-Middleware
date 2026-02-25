@@ -395,8 +395,27 @@ python api_server.py
 | `GET /api/v1/config` | Sanitised safety config |
 | `GET /health` | Server health + uptime |
 | `GET /health/backend` | Remote LLM reachability probe |
+| `GET /dashboard` | Monitoring dashboard UI |
 
 Interactive docs: `http://localhost:8000/docs`
+
+---
+
+## Monitoring Dashboard
+
+A built-in real-time dashboard is served at **`http://localhost:8000/dashboard`** — no extra tooling required.
+
+![LLM Safety Dashboard](docs/dashboard-preview.png)
+
+The dashboard auto-refreshes every 10 seconds and shows:
+
+- **Live status chips** — server health and backend reachability
+- **Request counts** — total / accepted / rejected with percentages
+- **Average latency** per request
+- **Accept rate** progress bar
+- **Accept / reject donut chart** (pure SVG, no external dependencies)
+- **Rejection reason breakdown** — colour-coded bars for each rejection type (`token_filter`, `pattern_match`, `semantic_unsafe`, etc.)
+- **System info** — version, uptime, backend type, model, backend URL
 
 ---
 
@@ -450,7 +469,7 @@ docker run -p 8000:8000 \
 ## Roadmap
 
 - [ ] Multi-language support (non-English prompts)
-- [ ] Real-time monitoring dashboard
+- [x] Real-time monitoring dashboard (`/dashboard`)
 - [ ] Streaming response support
 - [ ] Custom classifier model plug-in API
 - [ ] Distributed deployment with shared rate-limit store (Redis)
